@@ -1,0 +1,53 @@
+# Ngưỡng dưới đây là GIÁ TRỊ KHỞI ĐẦU (nháp). Hiệu chỉnh sau khi đo baseline (tuần 4)
+# và thống nhất với UTH, mentor VNPT. Mệnh đề "for" giúp lọc cảnh báo giả do spike ngắn (S4).
+groups:
+  - name: host
+    rules:
+      - alert: HostHighCpu
+        expr: 100 - (avg by (host) (rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU cao trên {{ $labels.host }}"
+          description: "CPU sử dụng {{ $value | printf \"%.1f\" }}% (ngưỡng nháp 80%) trong hơn 2 phút."
+
+      - alert: HostHighMemory
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM cao trên {{ $labels.host }}"
+          description: "RAM sử dụng {{ $value | printf \"%.1f\" }}% (ngưỡng nháp 85%)."
+
+      - alert: HostDiskAlmostFull
+        expr: |
+          (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*"}
+               / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*"}) * 100 > 85
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Đĩa gần đầy: {{ $labels.mountpoint }}"
+          description: "Dung lượng dùng {{ $value | printf \"%.1f\" }}% (ngưỡng nháp 85%)."
+
+      - alert: ExporterDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Mất kết nối metric: {{ $labels.job }}"
+          description: "Target {{ $labels.instance }} của job {{ $labels.job }} không scrape được."
+
+  - name: service
+    rules:
+      - alert: EndpointDown
+        expr: probe_success == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Endpoint không phản hồi: {{ $labels.instance }}"
+          description: "Blackbox không truy cập được {{ $labels.instance }} trong hơn 30 giây."
