@@ -2,7 +2,7 @@
 # Chạy:  docker compose up -d      Dừng:  docker compose down
 # Phiên bản image đặt trong file .env
 
-name: n47-monitoring
+name: infrastructure-observability
 
 services:
   prometheus:
