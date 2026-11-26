@@ -21,7 +21,7 @@ services:
       - "127.0.0.1:9090:9090"
     depends_on:
       - alertmanager
-    restart: unless-stopped
+    restart: always
 
   node-exporter:
     image: prom/node-exporter:${NODE_EXPORTER_VERSION}
